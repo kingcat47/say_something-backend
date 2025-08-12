@@ -22,21 +22,19 @@ export class TextService {
                 count: 1,
             });
             await this.textRepository.save(record);
-            return { oldText: 'your first', count: 1 };
+            return { oldText: newText, count: 1 };  // oldText를 newText로 변경
         }
 
-        const oldText = record.text ?? 'your first';
         record.text = newText;
         record.count += 1;
 
         await this.textRepository.save(record);
 
-        return { oldText, count: record.count };
+        return { oldText: newText, count: record.count };  // oldText를 newText로 변경
     }
 
     async sayText_port(port_str: string, newText: string): Promise<{ oldText: string; portStr: string }> {
         let slot = await this.portTextRepository.findOne({ where: { port_str } });
-        const oldText = slot?.text ?? 'your first';
 
         if (!slot) {
             const newSlot = this.portTextRepository.create({ port_str, text: newText });
@@ -45,6 +43,7 @@ export class TextService {
             slot.text = newText;
             await this.portTextRepository.save(slot);
         }
-        return { oldText: oldText ?? 'your first', portStr: port_str };
+        return { oldText: newText, portStr: port_str };  // oldText도 newText로 변경
     }
+
 }
