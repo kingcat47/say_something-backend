@@ -37,7 +37,7 @@ export class ImageController {
 
         return {
             message: '포트 이미지 저장 완료',
-            previousImage: oldImage ? oldImage.toString('base64') : null,
+            previousImage: oldImage,
         };
     }
 }
