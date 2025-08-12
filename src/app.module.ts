@@ -4,7 +4,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
 dotenv.config();
-
+import { TextModule } from './text/text.module';
 import { typeOrmConfig } from './configs/typeorm.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -16,6 +16,7 @@ import { AppService } from './app.service';
       envFilePath: '.env',
     }),
     TypeOrmModule.forRoot(typeOrmConfig),
+    TextModule,
   ],
   controllers: [AppController],
   providers: [AppService],  // AppService 반드시 등록 필요
