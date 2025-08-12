@@ -34,7 +34,7 @@ export class TextService {
         return { oldText, count: record.count };
     }
 
-    async sayText_port(port_str: string, newText: string): Promise<string> {
+    async sayText_port(port_str: string, newText: string): Promise<{ oldText: string; portStr: string }> {
         let slot = await this.portTextRepository.findOne({ where: { port_str } });
         const oldText = slot?.text ?? 'your first';
 
@@ -45,6 +45,6 @@ export class TextService {
             slot.text = newText;
             await this.portTextRepository.save(slot);
         }
-        return oldText ?? 'your first';
+        return { oldText: oldText ?? 'your first', portStr: port_str };
     }
 }
