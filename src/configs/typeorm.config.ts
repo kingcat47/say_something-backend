@@ -18,5 +18,5 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
 
     synchronize: true,
 
-    logging: process.env.NODE_ENV !== 'production',
+    logging: true,
 };
