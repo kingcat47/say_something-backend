@@ -11,7 +11,7 @@ export class TextService {
         private readonly textRepository: Repository<TextEntity>,
         @InjectRepository(Port_TextEntity)
         private readonly portTextRepository: Repository<Port_TextEntity>,
-    ){}
+    ) {}
 
     async sayText(newText: string): Promise<{ oldText: string; count: number }> {
         let record = await this.textRepository.findOne({ where: {} });
@@ -19,7 +19,7 @@ export class TextService {
         if (!record) {
             record = this.textRepository.create({
                 text: newText,
-                count: 1
+                count: 1,
             });
             await this.textRepository.save(record);
             return { oldText: 'your first', count: 1 };
@@ -29,27 +29,22 @@ export class TextService {
         record.text = newText;
         record.count += 1;
 
-        await this.portTextRepository.save(record);
+        await this.textRepository.save(record);
 
         return { oldText, count: record.count };
     }
 
-    async sayText_port(port_str: string , newText: string): Promise<string> {
-        let slot = await this.portTextRepository.findOne({ where: { port_str } })
+    async sayText_port(port_str: string, newText: string): Promise<string> {
+        let slot = await this.portTextRepository.findOne({ where: { port_str } });
         const oldText = slot?.text ?? 'your first';
 
-        if(!slot){
+        if (!slot) {
             const newSlot = this.portTextRepository.create({ port_str, text: newText });
             await this.portTextRepository.save(newSlot);
-        }
-        else{
+        } else {
             slot.text = newText;
             await this.portTextRepository.save(slot);
         }
         return oldText ?? 'your first';
     }
 }
-
-
-
-
