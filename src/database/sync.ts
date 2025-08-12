@@ -12,7 +12,7 @@ export const AppDataSource = new DataSource({
     port: parseInt(process.env.DB_PORT || '5432', 10),   // 5432 기본 포트
     username: process.env.DB_USERNAME,    // .env에 DB_USERNAME 설정 필요
     password: process.env.DB_PASSWORD,    // .env에 DB_PASSWORD 설정 필요
-    database: process.env.DB_DATABASE,    // .env에 DB_DATABASE 설정 필요
+    database: 'postgres',    // .env에 DB_DATABASE 설정 필요
     entities: [TextEntity, Port_TextEntity],
     synchronize: true,                    // 개발에서만 true 권장, 운영에서는 false 권장
     logging: true,                       // 필요 시 로깅 활성화 가능
