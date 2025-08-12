@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TextModule } from './text/text.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,     // 개발환경에서만 true 권장 (자동 테이블 동기화)
     }),
+    TextModule,
     // ...다른 모듈들
   ],
 })
