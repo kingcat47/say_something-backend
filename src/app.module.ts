@@ -8,6 +8,7 @@ import { TextModule } from './text/text.module';
 import { typeOrmConfig } from './configs/typeorm.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ImageModule } from './image/image.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AppService } from './app.service';
     }),
     TypeOrmModule.forRoot(typeOrmConfig),
     TextModule,
+    ImageModule,
   ],
   controllers: [AppController],
   providers: [AppService],  // AppService 반드시 등록 필요
