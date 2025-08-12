@@ -7,7 +7,7 @@ async function bootstrap() {
 
 
   app.enableCors({
-    origin: ['https://saysome.thnos.app'], // 또는 개발 시 '*'
+    origin: ['http://saysome.thnos.app'], // 또는 개발 시 '*'
     credentials: true,
   });
 
