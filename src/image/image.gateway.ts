@@ -49,7 +49,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (!clientSocket) continue;
 
             if (readPort === '' || readPort === sendPort) {
-                clientSocket.emit('image', { port: sendPort, file: base64Image });
+                clientSocket.emit('image 보냈습니다', { port: sendPort });
             }
         }
     }
