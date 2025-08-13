@@ -9,17 +9,17 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
-
 @WebSocketGateway({ cors: { origin: '*' } })
 export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
-    private clientReadPorts: Map<string, string> = new Map();
+    // 클라이언트 ID → 읽을 포트 번호 저장
+    private clientReadPorts = new Map<string, string>();
 
     handleConnection(client: Socket) {
         console.log(`Client connected: ${client.id}`);
-        this.clientReadPorts.set(client.id, "");
+        this.clientReadPorts.set(client.id, '');
     }
 
     handleDisconnect(client: Socket) {
@@ -27,18 +27,18 @@ export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.clientReadPorts.delete(client.id);
     }
 
-
+    // 클라이언트에서 필터 포트 지정
     @SubscribeMessage('setReadPort')
     setReadPort(
-        @MessageBody() data: { read_port: string },
+        @MessageBody() data: { read_port: string }, // snake_case로 받기
         @ConnectedSocket() client: Socket,
     ) {
-        this.clientReadPorts.set(client.id, data.read_port || "");
-        console.log(
-            `Client ${client.id} set read_port to '${data.read_port || ''}'`,
-        );
+        const portValue = data.read_port || '';
+        this.clientReadPorts.set(client.id, portValue);
+        console.log(`Client ${client.id} set read_port to '${portValue}'`);
     }
 
+    // 메시지 전송 -> 읽을 포트와 매칭되는 클라이언트에게만 보냄
     @SubscribeMessage('sendMessage')
     handleMessage(
         @MessageBody() data: { port: string; text: string },
@@ -48,9 +48,9 @@ export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
-            if (!clientSocket) continue; // 연결이 끊긴 경우 건너뜀
+            if (!clientSocket) continue;
 
-            if (readPort === "" || readPort === port) {
+            if (readPort === '' || readPort === port) {
                 clientSocket.emit('message', { port, text });
             }
         }
