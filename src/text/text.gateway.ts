@@ -45,7 +45,7 @@ export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ) {
         const port = String(data.port || '').trim(); // 안전하게 문자열 변환
         const text = data.text;
-
+        console.log('디버깅용임. text 보내기 콘솔')
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
             if (!clientSocket) continue;
