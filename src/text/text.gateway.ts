@@ -14,7 +14,6 @@ export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
-    // 클라이언트 ID → 읽을 포트 번호 저장
     private clientReadPorts = new Map<string, string>();
 
     handleConnection(client: Socket) {
