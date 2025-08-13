@@ -69,6 +69,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 if (!clientSocket) continue;
 
                 if (readPort === '' || readPort === sendPort) {
+                    console.log('보내는중 서버왈')
                     clientSocket.emit('image', { port: sendPort, file: fullBase64 });
                 }
             }
