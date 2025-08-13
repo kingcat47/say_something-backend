@@ -38,20 +38,18 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage('sendImage')
     handleImage(
-        @MessageBody() data: { port: string; file: ArrayBuffer | Uint8Array },
+        @MessageBody() data: { port: string; file: string },
         @ConnectedSocket() sender: Socket,
     ) {
         const sendPort = String(data.port || '');
-        const uint8Array = data.file instanceof Uint8Array ? data.file : new Uint8Array(data.file);
-        const fileBuffer = Buffer.from(uint8Array); // 안전 변환
+        const base64Image = data.file; // base64 문자열로 받음
 
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
             if (!clientSocket) continue;
 
-            // 전체(all) 모드거나, 보낸 포트와 일치하면 전송
             if (readPort === '' || readPort === sendPort) {
-                clientSocket.emit('image', { port: sendPort, file: fileBuffer });
+                clientSocket.emit('image', { port: sendPort, file: base64Image });
             }
         }
     }
