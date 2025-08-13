@@ -52,7 +52,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const sendPort = String(data.port || '');
         const chunkKey = `${sender.id}_${sendPort}`;
 
-        // Chunk 초기화
+
         if (!this.imageBuffers.has(chunkKey)) {
             this.imageBuffers.set(chunkKey, { chunks: [], port: sendPort });
         }
@@ -73,7 +73,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 }
             }
 
-            // 임시 버퍼 삭제
+
             this.imageBuffers.delete(chunkKey);
         }
     }
