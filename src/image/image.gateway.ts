@@ -11,7 +11,7 @@ import { Server, Socket } from "socket.io";
 
 interface ImageChunkData {
     port: string;
-    fileChunk: string;
+    fileChunk: ArrayBuffer; // 변경: string -> ArrayBuffer
     isLastChunk: boolean;
     chunkIndex: number;
 }
@@ -22,7 +22,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     server: Server;
 
     private clientReadPorts = new Map<string, string>();
-    private imageBuffers = new Map<string, { chunks: string[]; port: string }>();
+    private imageBuffers = new Map<string, { chunks: ArrayBuffer[]; port: string }>();
 
     handleConnection(client: Socket) {
         console.log(`Client connected: ${client.id}`);
@@ -52,28 +52,36 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const sendPort = String(data.port || '');
         const chunkKey = `${sender.id}_${sendPort}`;
 
-
         if (!this.imageBuffers.has(chunkKey)) {
             this.imageBuffers.set(chunkKey, { chunks: [], port: sendPort });
         }
 
-        const bufferData = this.imageBuffers.get(chunkKey)!; // 여기서 undefined 아님을 명시
+        const bufferData = this.imageBuffers.get(chunkKey)!;
         bufferData.chunks[data.chunkIndex] = data.fileChunk;
 
         if (data.isLastChunk) {
-            // 모든 Chunk 합쳐서 브로드캐스트
-            const fullBase64 = bufferData.chunks.join('');
+            // 모든 ArrayBuffer 합치기
+            const totalLength = bufferData.chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+            const merged = new Uint8Array(totalLength);
+            let offset = 0;
+
+            for (const chunk of bufferData.chunks) {
+                merged.set(new Uint8Array(chunk), offset);
+                offset += chunk.byteLength;
+            }
+
+            // 필요하면 base64로 변환 후 클라이언트에 보내기
+            const fullBase64 = Buffer.from(merged).toString('base64');
 
             for (const [clientId, readPort] of this.clientReadPorts.entries()) {
                 const clientSocket = this.server.sockets.sockets.get(clientId);
                 if (!clientSocket) continue;
 
                 if (readPort === '' || readPort === sendPort) {
-                    console.log('보내는중 서버왈')
+                    console.log('이미지 브로드캐스트 중...');
                     clientSocket.emit('image', { port: sendPort, file: fullBase64 });
                 }
             }
-
 
             this.imageBuffers.delete(chunkKey);
         }
