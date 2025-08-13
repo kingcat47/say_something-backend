@@ -27,24 +27,24 @@ export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.clientReadPorts.delete(client.id);
     }
 
-    // 클라이언트에서 필터 포트 지정
+
     @SubscribeMessage('setReadPort')
     setReadPort(
-        @MessageBody() data: { read_port: string }, // snake_case로 받기
+        @MessageBody() data: { read_port?: string; readPort?: string },
         @ConnectedSocket() client: Socket,
     ) {
-        const portValue = data.read_port || '';
-        this.clientReadPorts.set(client.id, portValue);
-        console.log(`Client ${client.id} set read_port to '${portValue}'`);
+        const value = String(data.read_port || data.readPort || '').trim();
+        this.clientReadPorts.set(client.id, value);
+        console.log(`Client ${client.id} set read_port to '${value}'`);
     }
 
-    // 메시지 전송 -> 읽을 포트와 매칭되는 클라이언트에게만 보냄
     @SubscribeMessage('sendMessage')
     handleMessage(
-        @MessageBody() data: { port: string; text: string },
+        @MessageBody() data: { port?: string; text: string },
         @ConnectedSocket() sender: Socket,
     ) {
-        const { port, text } = data;
+        const port = String(data.port || '').trim(); // 안전하게 문자열 변환
+        const text = data.text;
 
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
