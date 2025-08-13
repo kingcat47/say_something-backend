@@ -45,11 +45,12 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const base64Image = data.file; // base64 문자열로 받음
 
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
+            console.log('이미지 보냈습니다. 서버왈')
             const clientSocket = this.server.sockets.sockets.get(clientId);
             if (!clientSocket) continue;
 
             if (readPort === '' || readPort === sendPort) {
-                clientSocket.emit('image 보냈습니다', { port: sendPort });
+                clientSocket.emit('image', { port: sendPort, file: base64Image });
             }
         }
     }
