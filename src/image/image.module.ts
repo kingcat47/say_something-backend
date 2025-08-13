@@ -4,12 +4,13 @@ import { ImageService } from './image.service';
 import {TypeOrmModule} from "@nestjs/typeorm";
 import {ImageEntity} from "../image/entities/image.entity";
 import {Port_ImageEntity} from "../image/entities/port_image.entity";
+import {ImageGateway} from "./image.gateway";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ImageEntity, Port_ImageEntity]),
   ],
   controllers: [ImageController],
-  providers: [ImageService]
+  providers: [ImageService,ImageGateway]
 })
 export class ImageModule {}
