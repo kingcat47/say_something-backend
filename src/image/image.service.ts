@@ -1,56 +1,57 @@
-import { Injectable } from '@nestjs/common';
-import { S3, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import * as crypto from 'crypto';
-import * as path from 'path';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class ImageService {
-    private s3: S3;
+    private s3Client: S3Client;
+    private bucket: string;
 
     constructor() {
-        this.s3 = new S3({
-            endpoint: process.env.R2_ENDPOINT,
+        this.bucket = process.env.CLOUDFLARE_R2_BUCKET!;
+        this.s3Client = new S3Client({
             region: 'auto',
+            endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
             credentials: {
-                accessKeyId: process.env.R2_ACCESS_KEY!,
-                secretAccessKey: process.env.R2_SECRET_KEY!,
+                accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
+                secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
             },
         });
     }
 
-    async uploadAndGetUrl(file: Express.Multer.File): Promise<string> {
-        const ext = path.extname(file.originalname);
-        const key = `${Date.now()}-${crypto.randomUUID()}${ext}`;
+    async uploadImage(fileBuffer: Buffer, originalName: string): Promise<string> {
+        const fileKey = `${Date.now()}-${randomUUID()}-${originalName}`;
+        try {
+            console.log('업로드시작')
+            await this.s3Client.send(
+                new PutObjectCommand({
+                    Bucket: this.bucket,
+                    Key: fileKey,
+                    Body: fileBuffer,
+                    ACL: 'public-read',
+                }),
+            );
+            return `${process.env.CLOUDFLARE_R2_ENDPOINT}/${fileKey}`;
+        } catch (error) {
+            console.error('R2 업로드 실패', error);
+            throw new InternalServerErrorException('이미지 업로드 실패');
+        }
+    }
 
-        // 1️⃣ S3에 업로드
-        await this.s3.send(
-            new PutObjectCommand({
-                Bucket: process.env.R2_BUCKET_NAME!,
-                Key: key,
-                Body: file.buffer,
-                ContentType: file.mimetype,
-            }),
-        );
-
-        // 2️⃣ Presigned URL 생성 (클라이언트가 바로 접근)
-        const url = await getSignedUrl(
-            this.s3,
-            new GetObjectCommand({
-                Bucket: process.env.R2_BUCKET_NAME!,
-                Key: key,
-            }),
-            { expiresIn: 60 }, // 1분 유효
-        );
-
-        // 3️⃣ 바로 서버에서 삭제
-        await this.s3.send(
-            new DeleteObjectCommand({
-                Bucket: process.env.R2_BUCKET_NAME!,
-                Key: key,
-            }),
-        );
-
-        return url;
+    async deleteImage(fileUrl: string): Promise<void> {
+        try {
+            const url = new URL(fileUrl);
+            const key = url.pathname.replace(/^\/+/, '');
+            console.log('삭제함')
+            await this.s3Client.send(
+                new DeleteObjectCommand({
+                    Bucket: this.bucket,
+                    Key: key,
+                }),
+            );
+        } catch (error) {
+            console.error('R2 삭제 실패', error);
+            throw new InternalServerErrorException('이미지 삭제 실패');
+        }
     }
 }

@@ -12,12 +12,25 @@ export class ImageController {
 
     @Post('upload')
     @UseInterceptors(FileInterceptor('file'))
-    async upload(@UploadedFile() file: Express.Multer.File, @Body('port') port: string) {
-        const presignedUrl = await this.imageService.uploadAndGetUrl(file);
+    async uploadImage(
+        @UploadedFile() file: Express.Multer.File,
+        @Body('port') port: string,
+    ) {
+        if (!file) {
+            throw new Error('파일이 없습니다.');
+        }
 
-        // 소켓으로 클라이언트에 전송
-        this.imageGateway.sendToClients(port || '', presignedUrl);
 
-        return { url: presignedUrl };
+        const imageUrl = await this.imageService.uploadImage(file.buffer, file.originalname);
+
+
+        this.imageGateway.sendToClients(port, imageUrl);
+
+
+        setTimeout(() => {
+            this.imageService.deleteImage(imageUrl);
+        }, 30_000);
+
+        return { url: imageUrl };
     }
 }
