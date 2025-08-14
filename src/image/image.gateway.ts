@@ -11,7 +11,7 @@ import { Server, Socket } from "socket.io";
 
 interface ImageChunkData {
     port: string;
-    fileChunk: ArrayBuffer; // 변경: string -> ArrayBuffer
+    fileChunk: ArrayBuffer;
     isLastChunk: boolean;
     chunkIndex: number;
 }
@@ -70,7 +70,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 offset += chunk.byteLength;
             }
 
-            // 필요하면 base64로 변환 후 클라이언트에 보내기
+            // base64 변환
             const fullBase64 = Buffer.from(merged).toString('base64');
 
             for (const [clientId, readPort] of this.clientReadPorts.entries()) {
@@ -78,8 +78,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 if (!clientSocket) continue;
 
                 if (readPort === '' || readPort === sendPort) {
-                    console.log('이미지 브로드캐스트 중...');
-                    clientSocket.emit('image', { port: sendPort, file: fullBase64 });
+                    clientSocket.emit('image', { port: sendPort, base64Src: fullBase64 });
                 }
             }
 
