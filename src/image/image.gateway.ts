@@ -6,10 +6,12 @@ import {
     SubscribeMessage,
     WebSocketGateway,
     WebSocketServer
-} from "@nestjs/websockets";
-import { Server, Socket } from "socket.io";
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { Injectable } from '@nestjs/common';
 
 @WebSocketGateway({ cors: { origin: '*' } })
+@Injectable()
 export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
@@ -36,21 +38,15 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(`Client ${client.id} set read port to: ${value || '(all ports)'}`);
     }
 
-    @SubscribeMessage('sendImage')
-    handleImage(
-        @MessageBody() data: { port: string; file: string },
-        @ConnectedSocket() sender: Socket,
-    ) {
-        const sendPort = String(data.port || '');
-        const base64Image = data.file; // base64 문자열로 받음
-
+    // 기존 포트 로직 유지
+    sendToClients(port: string, imageUrl: string) {
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
-            console.log('이미지 보냈습니다. 서버왈')
             const clientSocket = this.server.sockets.sockets.get(clientId);
+            console.log('보내는중')
             if (!clientSocket) continue;
 
-            if (readPort === '' || readPort === sendPort) {
-                clientSocket.emit('image', { port: sendPort, file: base64Image });
+            if (readPort === '' || readPort === port) {
+                clientSocket.emit('image', { port, file: imageUrl });
             }
         }
     }
