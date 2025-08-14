@@ -1,5 +1,4 @@
-// image.controller.ts
-import {Body, Controller, Post, UploadedFile, UseInterceptors} from '@nestjs/common';
+import { Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageService } from './image.service';
 import { ImageGateway } from './image.gateway';
