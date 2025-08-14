@@ -9,20 +9,12 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 
-interface ImageChunkData {
-    port: string;
-    fileChunk: ArrayBuffer;
-    isLastChunk: boolean;
-    chunkIndex: number;
-}
-
 @WebSocketGateway({ cors: { origin: '*' } })
 export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
     private clientReadPorts = new Map<string, string>();
-    private imageBuffers = new Map<string, { chunks: ArrayBuffer[]; port: string }>();
 
     handleConnection(client: Socket) {
         console.log(`Client connected: ${client.id}`);
@@ -46,43 +38,20 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage('sendImage')
     handleImage(
-        @MessageBody() data: ImageChunkData,
+        @MessageBody() data: { port: string; file: string },
         @ConnectedSocket() sender: Socket,
     ) {
         const sendPort = String(data.port || '');
-        const chunkKey = `${sender.id}_${sendPort}`;
+        const base64Image = data.file; // base64 문자열로 받음
 
-        if (!this.imageBuffers.has(chunkKey)) {
-            this.imageBuffers.set(chunkKey, { chunks: [], port: sendPort });
-        }
+        for (const [clientId, readPort] of this.clientReadPorts.entries()) {
+            console.log('이미지 보냈습니다. 서버왈')
+            const clientSocket = this.server.sockets.sockets.get(clientId);
+            if (!clientSocket) continue;
 
-        const bufferData = this.imageBuffers.get(chunkKey)!;
-        bufferData.chunks[data.chunkIndex] = data.fileChunk;
-
-        if (data.isLastChunk) {
-            // 모든 ArrayBuffer 합치기
-            const totalLength = bufferData.chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
-            const merged = new Uint8Array(totalLength);
-            let offset = 0;
-
-            for (const chunk of bufferData.chunks) {
-                merged.set(new Uint8Array(chunk), offset);
-                offset += chunk.byteLength;
+            if (readPort === '' || readPort === sendPort) {
+                clientSocket.emit('image', { port: sendPort, file: base64Image });
             }
-
-            // base64 변환
-            const fullBase64 = Buffer.from(merged).toString('base64');
-
-            for (const [clientId, readPort] of this.clientReadPorts.entries()) {
-                const clientSocket = this.server.sockets.sockets.get(clientId);
-                if (!clientSocket) continue;
-
-                if (readPort === '' || readPort === sendPort) {
-                    clientSocket.emit('image', { port: sendPort, base64Src: fullBase64 });
-                }
-            }
-
-            this.imageBuffers.delete(chunkKey);
         }
     }
 }
