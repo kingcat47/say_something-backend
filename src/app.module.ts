@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
 dotenv.config();
 import { TextModule } from './text/text.module';
-import { typeOrmConfig } from './configs/typeorm.config';
+// import { typeOrmConfig } from './configs/typeorm.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ImageModule } from './image/image.module';
@@ -15,7 +15,6 @@ import { ImageModule } from './image/image.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    TypeOrmModule.forRoot(typeOrmConfig),
     TextModule,
     ImageModule,
   ],
