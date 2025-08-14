@@ -38,16 +38,17 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(`Client ${client.id} set read port to: ${value || '(all ports)'}`);
     }
 
-    sendToClients(port: string, imageUrl: string) {
+    // image.gateway.ts (sendToClients 수정)
+    sendToClients(port: string, presignedUrl: string) {
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
-            console.log('보내는중')
             if (!clientSocket) continue;
 
             if (readPort === '' || readPort === port) {
-                // 여기서 키를 file → url로 변경
-                clientSocket.emit('image', { port, url: imageUrl });
+                // ⚡ 여기서 presigned URL 전달
+                clientSocket.emit('image', { port, url: presignedUrl });
             }
         }
     }
+
 }
