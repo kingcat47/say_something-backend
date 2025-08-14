@@ -38,7 +38,6 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(`Client ${client.id} set read port to: ${value || '(all ports)'}`);
     }
 
-    // 기존 포트 로직 유지
     sendToClients(port: string, imageUrl: string) {
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
