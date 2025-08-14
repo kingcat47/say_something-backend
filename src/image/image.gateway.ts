@@ -45,7 +45,8 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (!clientSocket) continue;
 
             if (readPort === '' || readPort === port) {
-                clientSocket.emit('image', { port, file: imageUrl });
+                // 여기서 키를 file → url로 변경
+                clientSocket.emit('image', { port, url: imageUrl });
             }
         }
     }
