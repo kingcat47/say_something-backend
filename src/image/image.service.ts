@@ -10,10 +10,10 @@ export class ImageService {
 
     constructor() {
         this.bucket = process.env.CLOUDFLARE_R2_BUCKET!;
-        this.publicEndpoint = process.env.CLOUDFLARE_R2_PUBLIC_ENDPOINT!; // r2.dev 주소
+        this.publicEndpoint = process.env.CLOUDFLARE_R2_PUBLIC_ENDPOINT!;
         this.s3Client = new S3Client({
             region: 'auto',
-            endpoint: process.env.CLOUDFLARE_R2_ENDPOINT, // S3 API용 endpoint (cloudflarestorage.com)
+            endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
             credentials: {
                 accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
                 secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
@@ -24,8 +24,8 @@ export class ImageService {
     async uploadImage(fileBuffer: Buffer, originalName: string): Promise<string> {
         const fileKey = `${Date.now()}-${randomUUID()}-${originalName}`;
         try {
-            console.log('업로드시작');
-            await this.s3Client.send(
+            console.log('[R2] 업로드 시작, bucket:', this.bucket, ', key:', fileKey);
+            const res = await this.s3Client.send(
                 new PutObjectCommand({
                     Bucket: this.bucket,
                     Key: fileKey,
@@ -33,32 +33,37 @@ export class ImageService {
                     ACL: 'public-read',
                 }),
             );
-            // 프론트에서 접근할 공개 URL은 r2.dev 엔드포인트로 반환
+            console.log('[R2] 업로드 응답:', res);
             return `${this.publicEndpoint}/${fileKey}`;
         } catch (error) {
-            console.error('R2 업로드 실패', error);
+            console.error('[R2] 업로드 실패', error);
             throw new InternalServerErrorException('이미지 업로드 실패');
         }
     }
 
     async deleteImage(fileUrl: string): Promise<void> {
         try {
+            console.log('[R2] 삭제 요청 url:', fileUrl);
             const url = new URL(fileUrl);
             const pathname = url.pathname.replace(/^\/+/, '');
-            // bucket명이 포함돼 있을 수 있으므로 fileKey만 추출
             const key = pathname.includes('/')
                 ? pathname.split('/').pop()!
                 : pathname;
-            console.log('삭제 키:', key);
-            await this.s3Client.send(
+            const decodedKey = decodeURIComponent(key);
+            console.log('[R2] 삭제 키:', decodedKey);
+            console.log('[R2] 삭제 버킷:', this.bucket);
+            const res = await this.s3Client.send(
                 new DeleteObjectCommand({
                     Bucket: this.bucket,
-                    Key: key,
+                    Key: decodedKey,
                 }),
             );
-            console.log('삭제함');
+            console.log('[R2] DeleteObjectCommand 응답:', res);
+            // 실제 대시보드에 들어가 key 일치 여부 직접 확인하라는 안내
+            console.log('[R2] 대시보드에서 실제 삭제된지 반드시 확인 필요! 삭제키 완전일치 여부 수동 검증!!');
+            console.log('[R2] 삭제함');
         } catch (error) {
-            console.error('R2 삭제 실패', error);
+            console.error('[R2] 삭제 실패', error);
             throw new InternalServerErrorException('이미지 삭제 실패');
         }
     }
