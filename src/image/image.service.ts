@@ -44,14 +44,19 @@ export class ImageService {
     async deleteImage(fileUrl: string): Promise<void> {
         try {
             const url = new URL(fileUrl);
-            const key = url.pathname.replace(/^\/+/, '');
-            console.log('삭제함');
+            const pathname = url.pathname.replace(/^\/+/, '');
+            // bucket명이 포함돼 있을 수 있으므로 fileKey만 추출
+            const key = pathname.includes('/')
+                ? pathname.split('/').pop()!
+                : pathname;
+            console.log('삭제 키:', key);
             await this.s3Client.send(
                 new DeleteObjectCommand({
                     Bucket: this.bucket,
                     Key: key,
                 }),
             );
+            console.log('삭제함');
         } catch (error) {
             console.error('R2 삭제 실패', error);
             throw new InternalServerErrorException('이미지 삭제 실패');
