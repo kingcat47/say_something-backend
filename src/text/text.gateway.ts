@@ -42,16 +42,27 @@ export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @MessageBody() data: { port?: string; text: string },
         @ConnectedSocket() sender: Socket,
     ) {
-        const port = String(data.port || '').trim(); // 안전하게 문자열 변환
+        const port = String(data.port || '').trim();
         const text = data.text;
-        console.log('디버깅용임. text 보내기 콘솔')
+        console.log('디버깅용임. text 보내기 콘솔');
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
             if (!clientSocket) continue;
 
-            if (readPort === '' || readPort === port) {
+            // admin_mode면 모든 메시지 전달
+            if (readPort === '/admin_mode') {
                 clientSocket.emit('message', { port, text });
             }
+            // readPort가 빈값이면 port도 빈값인 메시지만 전달
+            else if (readPort === '' && port === '') {
+                clientSocket.emit('message', { port, text });
+            }
+            // 그 밖에는 readPort와 port 값이 같을 때만 전달
+            else if (readPort !== '' && readPort === port) {
+                clientSocket.emit('message', { port, text });
+            }
+            // 나머지 경우에는 전달 안 함
         }
     }
+
 }

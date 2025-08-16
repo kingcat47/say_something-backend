@@ -41,13 +41,23 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     sendToClients(port: string, imageUrl: string) {
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
-            console.log('보내는중')
+            console.log('보내는중');
             if (!clientSocket) continue;
 
-            if (readPort === '' || readPort === port) {
-                // 여기서 키를 file → url로 변경
+            // admin_mode면 모든 이미지 전달
+            if (readPort === '/admin_mode') {
                 clientSocket.emit('image', { port, url: imageUrl });
             }
+            // readPort가 빈값이면 send_port가 빈값인 데이터만 전달
+            else if (readPort === '' && port === '') {
+                clientSocket.emit('image', { port, url: imageUrl });
+            }
+            // readPort가 비어있지 않을 때는 포트 일치시만 전달
+            else if (readPort !== '' && readPort === port) {
+                clientSocket.emit('image', { port, url: imageUrl });
+            }
+            // 그 밖에는 전달하지 않음
         }
     }
+
 }
