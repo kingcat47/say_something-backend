@@ -6,12 +6,14 @@ import { randomUUID } from 'crypto';
 export class ImageService {
     private s3Client: S3Client;
     private bucket: string;
+    private publicEndpoint: string;
 
     constructor() {
         this.bucket = process.env.CLOUDFLARE_R2_BUCKET!;
+        this.publicEndpoint = process.env.CLOUDFLARE_R2_PUBLIC_ENDPOINT!; // r2.dev 주소
         this.s3Client = new S3Client({
             region: 'auto',
-            endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
+            endpoint: process.env.CLOUDFLARE_R2_ENDPOINT, // S3 API용 endpoint (cloudflarestorage.com)
             credentials: {
                 accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID!,
                 secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY!,
@@ -22,7 +24,7 @@ export class ImageService {
     async uploadImage(fileBuffer: Buffer, originalName: string): Promise<string> {
         const fileKey = `${Date.now()}-${randomUUID()}-${originalName}`;
         try {
-            console.log('업로드시작')
+            console.log('업로드시작');
             await this.s3Client.send(
                 new PutObjectCommand({
                     Bucket: this.bucket,
@@ -31,7 +33,8 @@ export class ImageService {
                     ACL: 'public-read',
                 }),
             );
-            return `${process.env.CLOUDFLARE_R2_ENDPOINT}/${fileKey}`;
+            // 프론트에서 접근할 공개 URL은 r2.dev 엔드포인트로 반환
+            return `${this.publicEndpoint}/${fileKey}`;
         } catch (error) {
             console.error('R2 업로드 실패', error);
             throw new InternalServerErrorException('이미지 업로드 실패');
@@ -42,7 +45,7 @@ export class ImageService {
         try {
             const url = new URL(fileUrl);
             const key = url.pathname.replace(/^\/+/, '');
-            console.log('삭제함')
+            console.log('삭제함');
             await this.s3Client.send(
                 new DeleteObjectCommand({
                     Bucket: this.bucket,
