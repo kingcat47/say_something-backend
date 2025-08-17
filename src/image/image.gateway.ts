@@ -1,4 +1,3 @@
-
 import {
     ConnectedSocket,
     MessageBody,
@@ -10,27 +9,30 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
+import { TextGateway } from '../text/text.gateway';
 import { faker } from '@faker-js/faker';
 
-@WebSocketGateway({ cors: { origin: '*' } })
 @Injectable()
+@WebSocketGateway({ cors: { origin: '*' } })
 export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
     private clientReadPorts = new Map<string, string>();
-    clientNames = new Map<string, string>();
+
+    constructor(private textGateway: TextGateway) {}
 
     handleConnection(client: Socket) {
+        // TextGateway의 clientNames와 동일하게 랜덤 이름 생성
         const randomName = faker.person.fullName();
-        this.clientNames.set(client.id, randomName);
+        this.textGateway.clientNames.set(client.id, randomName);
         this.clientReadPorts.set(client.id, '');
         console.log(`[ImageGateway] Client connected: ${client.id}, nickname: ${randomName}`);
     }
 
     handleDisconnect(client: Socket) {
         this.clientReadPorts.delete(client.id);
-        this.clientNames.delete(client.id);
+        this.textGateway.clientNames.delete(client.id);
         console.log(`[ImageGateway] Client disconnected: ${client.id}`);
     }
 
@@ -51,27 +53,20 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ) {
         const port = String(data.port || '').trim();
         const imageUrl = data.url;
-        const senderName = this.clientNames.get(sender.id) || '익명';
+        const senderName = this.textGateway.clientNames.get(sender.id) || '익명';
 
         console.log(`[ImageGateway] Sending image from ${senderName} (socket ${sender.id}) on port ${port}`);
 
         this.sendToClients(port, imageUrl, senderName);
     }
 
-    sendToClients(port: string, imageUrl: string, name?: string) {
+    sendToClients(port: string, imageUrl: string, senderName?: string) {
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
             if (!clientSocket) continue;
 
-            if (readPort === '/admin_mode') {
-                console.log('aaa', name)
-                clientSocket.emit('image', { port, url: imageUrl, senderName: name });
-            } else if (readPort === '' && port === '') {
-                console.log('aaa', name)
-                clientSocket.emit('image', { port, url: imageUrl, senderName: name });
-            } else if (readPort !== '' && readPort === port) {
-                console.log('aaa', name)
-                clientSocket.emit('image', { port, url: imageUrl, senderName: name });
+            if (readPort === '/admin_mode' || (readPort === '' && port === '') || readPort === port) {
+                clientSocket.emit('image', { port, url: imageUrl, senderName });
             }
         }
     }
