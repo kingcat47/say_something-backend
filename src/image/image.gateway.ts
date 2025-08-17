@@ -58,17 +58,19 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.sendToClients(port, imageUrl, senderName);
     }
 
-    // 컨트롤러에서도 호출할 수 있는 메서드
     sendToClients(port: string, imageUrl: string, name?: string) {
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);
             if (!clientSocket) continue;
 
             if (readPort === '/admin_mode') {
+                console.log('aaa', name)
                 clientSocket.emit('image', { port, url: imageUrl, senderName: name });
             } else if (readPort === '' && port === '') {
+                console.log('aaa', name)
                 clientSocket.emit('image', { port, url: imageUrl, senderName: name });
             } else if (readPort !== '' && readPort === port) {
+                console.log('aaa', name)
                 clientSocket.emit('image', { port, url: imageUrl, senderName: name });
             }
         }

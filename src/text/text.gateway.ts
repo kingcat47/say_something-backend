@@ -59,14 +59,17 @@ export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             // admin_mode면 모든 메시지 전달
             if (readPort === '/admin_mode') {
+                console.log('aaa', senderName)
                 clientSocket.emit('message', { port, text, senderName });
             }
             // readPort가 빈값이면 port도 빈값인 메시지만 전달
             else if (readPort === '' && port === '') {
+                console.log('aaa', senderName)
                 clientSocket.emit('message', { port, text, senderName });
             }
             // 그 밖에는 readPort와 port 값이 같을 때만 전달
             else if (readPort !== '' && readPort === port) {
+                console.log('aaa', senderName)
                 clientSocket.emit('message', { port, text, senderName });
             }
             // 나머지 경우에는 전달 안 함
