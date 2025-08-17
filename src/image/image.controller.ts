@@ -1,8 +1,9 @@
+
 import { Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageService } from './image.service';
 import { ImageGateway } from './image.gateway';
-import { UserNameService } from '../share/user-name.service'; // 실제 위치에 맞춰 경로 수정
+import { UserNameService } from '../share/user-name.service'
 
 @Controller('image')
 export class ImageController {
@@ -17,7 +18,7 @@ export class ImageController {
     async uploadImage(
         @UploadedFile() file: Express.Multer.File,
         @Body('port') port: string,
-        @Body('socketId') socketId: string, // 클라이언트에서 socket.id 보내기
+        @Body('socketId') socketId: string,
     ) {
         if (!file) {
             throw new Error('파일이 없습니다.');
@@ -25,10 +26,8 @@ export class ImageController {
 
         const imageUrl = await this.imageService.uploadImage(file.buffer, file.originalname);
 
-        // 이름을 반드시 UserNameService에서 조회
         const name = this.userNameService.getName(socketId) || '(익명)';
 
-        // Gateway 메서드로 이미지 + 이름 전송
         this.imageGateway.sendToClients(port, imageUrl, name);
 
         setTimeout(() => {

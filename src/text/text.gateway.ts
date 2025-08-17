@@ -1,4 +1,3 @@
-
 import {
     WebSocketGateway,
     WebSocketServer,
@@ -9,8 +8,7 @@ import {
     OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { faker } from '@faker-js/faker';
-import { UserNameService } from '../share/user-name.service'; // 경로는 실제 서비스 위치에 맞춰주세요
+import { UserNameService } from '../share/user-name.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -22,8 +20,7 @@ export class TextGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(private readonly userNameService: UserNameService) {}
 
     handleConnection(client: Socket) {
-        const randomName = faker.person.fullName();
-        this.userNameService.setName(client.id, randomName);
+        const randomName = this.userNameService.getOrCreateName(client.id);
         this.clientReadPorts.set(client.id, '');
         console.log(`[TextGateway] Client connected: ${client.id}, nickname: ${randomName}`);
     }

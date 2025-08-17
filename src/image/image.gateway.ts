@@ -9,7 +9,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
-import { faker } from '@faker-js/faker';
 import { UserNameService } from '../share/user-name.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -23,8 +22,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(private readonly userNameService: UserNameService) {}
 
     handleConnection(client: Socket) {
-        const randomName = faker.person.fullName();
-        this.userNameService.setName(client.id, randomName);
+        const randomName = this.userNameService.getOrCreateName(client.id);
         this.clientReadPorts.set(client.id, '');
         console.log(`[ImageGateway] Client connected: ${client.id}, nickname: ${randomName}`);
     }
@@ -65,13 +63,10 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (!clientSocket) continue;
 
             if (readPort === '/admin_mode') {
-                console.log('보내기전 이름:', name);
                 clientSocket.emit('image', { port, url: imageUrl, senderName: name });
             } else if (readPort === '' && port === '') {
-                console.log('보내기전 이름:', name);
                 clientSocket.emit('image', { port, url: imageUrl, senderName: name });
             } else if (readPort !== '' && readPort === port) {
-                console.log('보내기전 이름:', name);
                 clientSocket.emit('image', { port, url: imageUrl, senderName: name });
             }
         }
