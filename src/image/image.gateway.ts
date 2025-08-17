@@ -5,10 +5,11 @@ import {
     OnGatewayDisconnect,
     SubscribeMessage,
     WebSocketGateway,
-    WebSocketServer
+    WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
+import { faker } from '@faker-js/faker';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 @Injectable()
@@ -17,15 +18,19 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     server: Server;
 
     private clientReadPorts = new Map<string, string>();
+    private clientNames = new Map<string, string>();
 
     handleConnection(client: Socket) {
-        console.log(`Client connected: ${client.id}`);
+        const randomName = faker.person.fullName();
+        this.clientNames.set(client.id, randomName);
         this.clientReadPorts.set(client.id, '');
+        console.log(`Client connected: ${client.id}, nickname: ${randomName}`);
     }
 
     handleDisconnect(client: Socket) {
-        console.log(`Client disconnected: ${client.id}`);
         this.clientReadPorts.delete(client.id);
+        this.clientNames.delete(client.id);
+        console.log(`Client disconnected: ${client.id}`);
     }
 
     @SubscribeMessage('setReadPort')
@@ -38,26 +43,30 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         console.log(`Client ${client.id} set read port to: ${value || '(all ports)'}`);
     }
 
-    sendToClients(port: string, imageUrl: string) {
-        for (const [clientId, readPort] of this.clientReadPorts.entries()) {
-            const clientSocket = this.server.sockets.sockets.get(clientId);
-            console.log('보내는중');
-            if (!clientSocket) continue;
-
-            // admin_mode면 모든 이미지 전달
-            if (readPort === '/admin_mode') {
-                clientSocket.emit('image', { port, url: imageUrl });
-            }
-            // readPort가 빈값이면 send_port가 빈값인 데이터만 전달
-            else if (readPort === '' && port === '') {
-                clientSocket.emit('image', { port, url: imageUrl });
-            }
-            // readPort가 비어있지 않을 때는 포트 일치시만 전달
-            else if (readPort !== '' && readPort === port) {
-                clientSocket.emit('image', { port, url: imageUrl });
-            }
-            // 그 밖에는 전달하지 않음
-        }
+    @SubscribeMessage('sendImage')
+    handleSendImage(
+        @MessageBody() data: { port?: string; url: string },
+        @ConnectedSocket() sender: Socket,
+    ) {
+        const port = String(data.port || '').trim();
+        const imageUrl = data.url;
+        const senderName = this.clientNames.get(sender.id) || '익명';
+        this.sendToClients(port, imageUrl, senderName);
     }
 
+    // 컨트롤러에서도 호출할 수 있는 메서드
+    sendToClients(port: string, imageUrl: string, name?: string) {
+        for (const [clientId, readPort] of this.clientReadPorts.entries()) {
+            const clientSocket = this.server.sockets.sockets.get(clientId);
+            if (!clientSocket) continue;
+
+            if (readPort === '/admin_mode') {
+                clientSocket.emit('image', { port, url: imageUrl, senderName: name });
+            } else if (readPort === '' && port === '') {
+                clientSocket.emit('image', { port, url: imageUrl, senderName: name });
+            } else if (readPort !== '' && readPort === port) {
+                clientSocket.emit('image', { port, url: imageUrl, senderName: name });
+            }
+        }
+    }
 }
