@@ -65,10 +65,13 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (!clientSocket) continue;
 
             if (readPort === '/admin_mode') {
+                console.log('보내기전 이름:', name);
                 clientSocket.emit('image', { port, url: imageUrl, senderName: name });
             } else if (readPort === '' && port === '') {
+                console.log('보내기전 이름:', name);
                 clientSocket.emit('image', { port, url: imageUrl, senderName: name });
             } else if (readPort !== '' && readPort === port) {
+                console.log('보내기전 이름:', name);
                 clientSocket.emit('image', { port, url: imageUrl, senderName: name });
             }
         }
