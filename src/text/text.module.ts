@@ -6,5 +6,6 @@ import {TextGateway} from "./text.gateway";
   imports: [
   ],
   providers: [TextGateway],
+  exports: [TextGateway],
 })
 export class TextModule {}
