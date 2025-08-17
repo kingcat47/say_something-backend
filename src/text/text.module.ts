@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {TextGateway} from "./text.gateway";
+import {UserNameModule} from "../share/user-name.module";
 
 @Module({
-  imports: [
+  imports: [UserNameModule
   ],
   providers: [TextGateway],
 })

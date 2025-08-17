@@ -1,4 +1,3 @@
-
 import {
     ConnectedSocket,
     MessageBody,
@@ -11,6 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
+import { UserNameService } from '../share/user-name.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 @Injectable()
@@ -19,18 +19,19 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     server: Server;
 
     private clientReadPorts = new Map<string, string>();
-    clientNames = new Map<string, string>();
+
+    constructor(private readonly userNameService: UserNameService) {}
 
     handleConnection(client: Socket) {
         const randomName = faker.person.fullName();
-        this.clientNames.set(client.id, randomName);
+        this.userNameService.setName(client.id, randomName);
         this.clientReadPorts.set(client.id, '');
         console.log(`[ImageGateway] Client connected: ${client.id}, nickname: ${randomName}`);
     }
 
     handleDisconnect(client: Socket) {
         this.clientReadPorts.delete(client.id);
-        this.clientNames.delete(client.id);
+        this.userNameService.deleteName(client.id);
         console.log(`[ImageGateway] Client disconnected: ${client.id}`);
     }
 
@@ -51,14 +52,13 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ) {
         const port = String(data.port || '').trim();
         const imageUrl = data.url;
-        const senderName = this.clientNames.get(sender.id) || '익명';
+        const senderName = this.userNameService.getName(sender.id) || '익명';
 
         console.log(`[ImageGateway] Sending image from ${senderName} (socket ${sender.id}) on port ${port}`);
 
         this.sendToClients(port, imageUrl, senderName);
     }
 
-    // 컨트롤러에서도 호출할 수 있는 메서드
     sendToClients(port: string, imageUrl: string, name?: string) {
         for (const [clientId, readPort] of this.clientReadPorts.entries()) {
             const clientSocket = this.server.sockets.sockets.get(clientId);

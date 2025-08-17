@@ -2,12 +2,14 @@ import { Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/c
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageService } from './image.service';
 import { ImageGateway } from './image.gateway';
+import { UserNameService } from '../share/user-name.service'; // 실제 위치에 맞춰 경로 수정
 
 @Controller('image')
 export class ImageController {
     constructor(
         private readonly imageService: ImageService,
         private readonly imageGateway: ImageGateway,
+        private readonly userNameService: UserNameService,
     ) {}
 
     @Post('upload')
@@ -23,8 +25,8 @@ export class ImageController {
 
         const imageUrl = await this.imageService.uploadImage(file.buffer, file.originalname);
 
-        // 백엔드 gateway의 clientNames에서 이름 조회:
-        const name = this.imageGateway.clientNames.get(socketId) || '(익명)';
+        // 이름을 반드시 UserNameService에서 조회
+        const name = this.userNameService.getName(socketId) || '(익명)';
 
         // Gateway 메서드로 이미지 + 이름 전송
         this.imageGateway.sendToClients(port, imageUrl, name);
