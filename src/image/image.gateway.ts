@@ -1,3 +1,4 @@
+
 import {
     ConnectedSocket,
     MessageBody,
@@ -24,13 +25,13 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const randomName = faker.person.fullName();
         this.clientNames.set(client.id, randomName);
         this.clientReadPorts.set(client.id, '');
-        console.log(`Client connected: ${client.id}, nickname: ${randomName}`);
+        console.log(`[ImageGateway] Client connected: ${client.id}, nickname: ${randomName}`);
     }
 
     handleDisconnect(client: Socket) {
         this.clientReadPorts.delete(client.id);
         this.clientNames.delete(client.id);
-        console.log(`Client disconnected: ${client.id}`);
+        console.log(`[ImageGateway] Client disconnected: ${client.id}`);
     }
 
     @SubscribeMessage('setReadPort')
@@ -40,7 +41,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ) {
         const value = String(data.read_port || data.readPort || '').trim();
         this.clientReadPorts.set(client.id, value);
-        console.log(`Client ${client.id} set read port to: ${value || '(all ports)'}`);
+        console.log(`[ImageGateway] Client ${client.id} set read port to: ${value || '(all ports)'}`);
     }
 
     @SubscribeMessage('sendImage')
@@ -51,6 +52,9 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const port = String(data.port || '').trim();
         const imageUrl = data.url;
         const senderName = this.clientNames.get(sender.id) || '익명';
+
+        console.log(`[ImageGateway] Sending image from ${senderName} (socket ${sender.id}) on port ${port}`);
+
         this.sendToClients(port, imageUrl, senderName);
     }
 
