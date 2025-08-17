@@ -15,7 +15,7 @@ export class ImageController {
     async uploadImage(
         @UploadedFile() file: Express.Multer.File,
         @Body('port') port: string,
-        @Body('name') name: string, // 클라이언트에서 보낸 이름
+        @Body('socketId') socketId: string, // 클라이언트에서 socket.id 보내기
     ) {
         if (!file) {
             throw new Error('파일이 없습니다.');
@@ -23,10 +23,12 @@ export class ImageController {
 
         const imageUrl = await this.imageService.uploadImage(file.buffer, file.originalname);
 
+        // 백엔드 gateway의 clientNames에서 이름 조회:
+        const name = this.imageGateway.clientNames.get(socketId) || '(익명)';
+
         // Gateway 메서드로 이미지 + 이름 전송
         this.imageGateway.sendToClients(port, imageUrl, name);
 
-        // 30초 후 자동 삭제
         setTimeout(() => {
             this.imageService.deleteImage(imageUrl);
         }, 30_000);

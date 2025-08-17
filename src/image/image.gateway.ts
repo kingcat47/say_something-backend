@@ -18,7 +18,7 @@ export class ImageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     server: Server;
 
     private clientReadPorts = new Map<string, string>();
-    private clientNames = new Map<string, string>();
+    clientNames = new Map<string, string>();
 
     handleConnection(client: Socket) {
         const randomName = faker.person.fullName();
