@@ -8,6 +8,7 @@ import { TextModule } from './text/text.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ImageModule } from './image/image.module';
+import { GifModule } from './gif/gif.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ImageModule } from './image/image.module';
     }),
     TextModule,
     ImageModule,
+    GifModule,
   ],
   controllers: [AppController],
   providers: [AppService],  // AppService 반드시 등록 필요
