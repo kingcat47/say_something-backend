@@ -57,10 +57,13 @@ export class GifGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (!clientSocket) continue;
 
             if (readPort === '/admin_mode') {
+                console.log('[GifGateway] Sending Gif');
                 clientSocket.emit('gif', { port, gifUrl, senderName });
             } else if (readPort === '' && port === '') {
+                console.log('[GifGateway] Sending Gif');
                 clientSocket.emit('gif', { port, gifUrl, senderName });
             } else if (readPort !== '' && readPort === port) {
+                console.log('[GifGateway] Sending Gif');
                 clientSocket.emit('gif', { port, gifUrl, senderName });
             }
         }
