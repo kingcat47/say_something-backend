@@ -1,0 +1,6 @@
+# CloudType이 이 저장소를 Dockerfile로 빌드하도록 지정
+name: say-something-backend
+app: dockerfile
+options:
+  ports: 3000
+  dockerfile: Dockerfile
